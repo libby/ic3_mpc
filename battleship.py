@@ -41,6 +41,8 @@ from viff.runtime import create_runtime, gather_shares
 from viff.comparison import Toft05Runtime
 from viff.config import load_config
 from viff.util import rand, find_prime
+from viff.equality import ProbabilisticEqualityMixin
+from viff.runtime import Runtime, create_runtime, make_runtime_class
 
 # We start by defining the protocol, it will be started at the bottom
 # of the file.
@@ -87,12 +89,11 @@ class Protocol:
         m1_ge_m2 = m1 >= m2
         m1_ge_m3 = m1 >= m3
         m2_ge_m3 = m2 >= m3
-        print "going one dead"
+
         print g2
-        one_dead = g2 >= s1 
-        print "one_dead"
-     #   two_dead = (g1 == s2) or (g3 == s2)
-#        three_dead = (g1 == s3) or (g2 == s3)
+        one_dead = (g2 == s1) or (g3 == s1)
+        #two_dead = (g1 == s2) or (g3 == s2)
+        #three_dead = (g1 == s3) or (g2 == s3)
 
 
 
@@ -187,7 +188,9 @@ else:
 print players
 print options
 # Create a deferred Runtime and ask it to run our protocol when ready.
-pre_runtime = create_runtime(id, players, 1, options, Toft05Runtime)
+runtime_class = make_runtime_class(mixins=[Toft05Runtime,ProbabilisticEqualityMixin])
+#pre_runtime = create_runtime(id, players, 1, options, Toft05Runtime,)
+pre_runtime = create_runtime(id, players, 1, options,runtime_class)
 pre_runtime.addCallback(Protocol)
 
 # Start the Twisted event loop.
