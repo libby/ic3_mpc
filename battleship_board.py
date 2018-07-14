@@ -30,40 +30,32 @@ def battleship_board( ships ):
 
     for lgth, name, (updown, x, y) in zip(ship_lengths, ship_names, ships):
         # Bounds checks
-        if updown:
-            if not (0 <= x < 10 and
-                    0 <= y < (10 - lgth)):
-                print '1 Out of bounds!'
-                error = True # Out of bounds!
-        else:
-            if not (0 <= x < (10 - lgth) and
-                    0 <= y < 10):
-                print '2 Out of bounds!'
-                error = True # Out of bounds!
-                
+        in_bounds_ud = (0 <= x and x < 10 and
+                        0 <= y and y < (10 - lgth))
+        in_bounds_lr = (0 <= x and x < (10 - lgth) and
+                        0 <= y and y < 10)
+        in_bounds = (in_bounds_ud and updown) or (in_bounds_lr and not updown)
+        error = error or (not in_bounds)
+        
         for i in range(10):
             for j in range(10):
-                if updown:
-                    if (x == j and
-                        y <= i < y + lgth):
-                        # Overlap checks                        
-                        if board[i][j] != '.':
-                            print '3 Overlap!'
-                            error = True # Overlap!
-                            board[i][j] = '\xe2'
-                        else:
-                            board[i][j] = name
-                else:
-                    if (x <= j < x + lgth and
-                        y == i):
-                        # Overlap checks
-                        if board[i][j] != '.':
-                            error = True # Overlap!
-                            print '4 Overlap!'
-                            board[i][j] = '\xe2'
-                        else:
-                            board[i][j] = name
-                    
+                in_ship_ud = (x == j and 
+                              y <= i and i < (y + lgth))
+                in_ship_lr = (x <= j and j < (x + lgth) and
+                              y == i)
+                in_ship = (in_ship_ud and updown) or (in_ship_lr and not updown)
+
+                # Overlap checks
+                overlap = in_ship and board[i][j] != '.'
+                error = error or (overlap)
+
+                # Paint
+                if in_ship:
+                    if board[i][j] == '.':
+                        board[i][j] = name
+                    else:
+                        board[i][j] = '\xe2'
+
     return board, error
 
 def print_battleship(board):
