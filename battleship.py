@@ -49,21 +49,27 @@ from viff.runtime import Runtime, create_runtime, make_runtime_class
 
 class Protocol:
 
+    def create_player_state(self, players):
+        self.lives = [True for p in players]
+        return
+
     def __init__(self, runtime):
         # Save the Runtime for later use
         self.runtime = runtime
-
+       # create_player_state(self.runtime.players)
+        lives = [True for p in runtime.players]
+        self.lives = lives
+        print "Player's lives %s " % self.lives
+        print "I am Player %d " % (runtime.id) 
+        print "There are %d player in this game." % (len(runtime.players))
+        sec_num = input("Enter a secret number for you opponent to guess (1 - 20): ")
+        print "Your secret is: ", sec_num
         # This is the value we will use in the protocol.
-        self.millions = rand.randint(1, 200)
-        print "I am Millionaire %d and I am worth %d millions." \
-            % (runtime.id, self.millions)
-
-        sec_num = input("Enter a secret number for you opponent to guess (1 - 20):")
-        print "your secret is ", sec_num
         self.sec_num = sec_num
-        #guess = input("guess your opponents number")
-        #self.guess
-        #print "your guess is", guess
+        guess = input("Guess your opponent's number: ")
+        # This is the value we will use in the protocol.
+        self.guess = guess
+        print "Your guess is %d" % self.guess
 
         # For the comparison protocol to work, we need a field modulus
         # bigger than 2**(l+1) + 2**(l+k+1), where the bit length of
@@ -77,53 +83,44 @@ class Protocol:
 
         # We must secret share our input with the other parties. They
         # will do the same and we end up with three variables
-        m1, m2, m3 = runtime.shamir_share([1, 2, 3], Zp, self.millions)
-        print "shared m1 m2 m3"
         s1, s2, s3 = runtime.shamir_share([1, 2, 3], Zp, self.sec_num)
-        g1, g2, g3 = runtime.shamir_share([1, 2, 3], Zp, self.sec_num)
+        g1, g2, g3 = runtime.shamir_share([1, 2, 3], Zp, self.guess)
 
         # Now that everybody has secret shared their inputs we can
-        # compare them. We compare the worth of the first millionaire
-        # with the two others, and compare those two millionaires with
-        # each other.
-        m1_ge_m2 = m1 >= m2
-        m1_ge_m3 = m1 >= m3
-        m2_ge_m3 = m2 >= m3
-
+        # compare them. We check to see if any of the players have
+        # guessed another player's secret, in which case they kill
+        # that player, but because this is secrete shared, we don't
+        # learn anything about the guesses of the other players
+        # or the secrets.
+        # TODO: can we do 'or'?
         print g2
-        one_dead = (g2 == s1) or (g3 == s1)
-        #two_dead = (g1 == s2) or (g3 == s2)
-        #three_dead = (g1 == s3) or (g2 == s3)
 
-
+        one_dead     = (g2 == s1) # or (g3 == s1)
+        one_dead_2   = (g3 == s1)
+        two_dead     = (g1 == s2) # or (g3 == s2)
+        two_dead_2   = (g3 == s2)
+        three_dead   = (g1 == s3) #or (g2 == s3)
+        three_dead_2 = (g2 == s3)
 
         # The results are secret shared, so we must open them before
-        # we can do anything usefull with them.
-        open_m1_ge_m2 = runtime.open(m1_ge_m2)
-        open_m1_ge_m3 = runtime.open(m1_ge_m3)
-        open_m2_ge_m3 = runtime.open(m2_ge_m3)
-
+        # we can do anything usefull with them. open in this case
+        # means computing
         # open the secret shared results
         open_one_dead = runtime.open(one_dead)
-     #   open_two_dead = runtime.open(two_dead)
-     #   open_three_dead = runtime.open(three_dead)
+        open_one_dead_2 = runtime.open(one_dead_2)
+        open_two_dead = runtime.open(two_dead)
+        open_two_dead_2 = runtime.open(two_dead_2)
+        open_three_dead = runtime.open(three_dead)
+        open_three_dead_2 = runtime.open(three_dead_2)
 
-     #   res = gather_shares([open_one_dead, open_two_dead, open_three_dead])
-     #   res = gather_shares([open_one_dead])
-     #   print "results one dead " % (res[0]) 
-     #   print "reslts two dead " % (res[0]) 
-     #   print "results three dead " % (res[0]) 
-        
         # We will now gather the results and call the
         # self.results_ready method when they have all been received.
         # TODO: you can only call gather_shares once?
-        results = gather_shares([open_m1_ge_m2, open_m1_ge_m3, open_m2_ge_m3, open_one_dead])
-        #m1_ge_m2 = results[0]
-        #print "results one dead ", results[3] 
-
-        print "getting results callback"
-        results.addCallback(self.results_ready)
-        print "got results"
+        print "getting results"
+        results = gather_shares([open_one_dead, open_one_dead_2, open_two_dead, open_two_dead_2, open_three_dead, open_three_dead_2])
+        print "I am player  and my secret is %d." \
+            % (self.sec_num)
+        results.addCallback(self.ships_ready)
 
         # We can add more callbacks to the callback chain in results.
         # These are called in sequence when self.results_ready is
@@ -139,8 +136,22 @@ class Protocol:
         # The next callback shuts the runtime down, killing the
         # connections between the players.
         runtime.schedule_callback(results, lambda _: runtime.shutdown())
-   # def battle_results_ready(self, results):
-        
+
+    def ships_ready(self, results):
+        p1_is_dead = results[0] 
+        p1_is_dead_2 = results[1] 
+        p2_is_dead = results[2] 
+        p2_is_dead_2 = results[3] 
+        p3_is_dead = results[4] 
+        p3_is_dead_2= results[5] 
+        print "who died?"
+        if p1_is_dead or p1_is_dead_2:
+          print "P1 is dead %s " % p1_is_dead 
+        if p2_is_dead or p2_is_dead_2:
+          print "P2 is dead %s " % p2_is_dead 
+        if p3_is_dead or p3_is_dead_2:
+          print "P3 is dead %s " % p3_is_dead 
+
     def results_ready(self, results):
         # Since this method is called as a callback above, the results
         # variable will contain actual field elements, not just
@@ -151,7 +162,6 @@ class Protocol:
         m1_ge_m3 = results[1]
         m2_ge_m3 = results[2]
 
-        print "results one dead %s " % results[3] 
         # We can establish the correct order of Millionaires 2 and 3.
         if m2_ge_m3:
             comparison = [3, 2]
@@ -188,8 +198,7 @@ else:
 print players
 print options
 # Create a deferred Runtime and ask it to run our protocol when ready.
-runtime_class = make_runtime_class(mixins=[Toft05Runtime,ProbabilisticEqualityMixin])
-#pre_runtime = create_runtime(id, players, 1, options, Toft05Runtime,)
+runtime_class = make_runtime_class(mixins=[Toft05Runtime, ProbabilisticEqualityMixin])
 pre_runtime = create_runtime(id, players, 1, options,runtime_class)
 pre_runtime.addCallback(Protocol)
 
