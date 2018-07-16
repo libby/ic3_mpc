@@ -19,9 +19,12 @@ $> ./launch_ships.sh
 ```
 
 # generate the config file 
+```
 $> python generate-config-files.py -n 3 -t 1 localhost:9001 localhost:9002 localhost:9003
+```
 
 # run scratch project
+```
 $> python battleship.py --no-ssl player-1.ini
 $> python battleship.py --no-ssl player-2.ini
 $> python battleship.py --no-ssl player-3.ini
