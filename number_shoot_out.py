@@ -134,7 +134,15 @@ class Protocol:
         # for a dead person's input.
         # TODO: only require the living players to respond.
         alive_player_array = self.alive_players()
-        return self.runtime.shamir_share([1, 2, 3], Zp, guess)
+     #  alive_player_array = [1, 2, 3]
+       # return self.runtime.shamir_share([1, 2, 3], Zp, guess)
+        if not self.alive[self.runtime.id - 1]:
+          print "sorry you're dead ignoring your input  %s " % self.runtime.id
+          return self.runtime.shamir_share(alive_player_array, Zp, None)
+        else:  
+          print "you're alive ignoring your input  %s " % self.runtime.id
+          print "alive  %s " % alive_player_array 
+          return self.runtime.shamir_share(alive_player_array, Zp, guess)
 
     def calc_round_results(self, g1, g2, g3):
         # Now that everybody has secret shared their inputs we can
