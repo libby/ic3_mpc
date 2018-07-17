@@ -63,6 +63,7 @@ class BattleshipShell(Cmd):
         else:
             self.board = board
         print_battleship(board)
+        return(board)
 
     def do_show_board(self, arg):
         print_battleship(self.board)
@@ -72,14 +73,15 @@ class BattleshipShell(Cmd):
         print(attack)
         # TODO check if the attack succeeded via MPC layer
 
-    def do_send_attack(self, arg, board):
-        attack_x = input('Input your attack coordinates (x): ')
-        attack_y = input('Input your attack coordinates (y): ')
+    def do_send_attack(self, arg):
+        board = self.do_board(self)
+        attack_x = int(input('Input your attack coordinates (x): '))
+        attack_y = int(input('Input your attack coordinates (y): '))
 
         if board[attack_x][attack_y] != '.':
-            print 'hit'
+            print('hit')
         else:
-            print 'miss'
+            print('miss')
 
 
 if __name__ == '__main__':
