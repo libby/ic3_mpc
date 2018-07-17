@@ -1,0 +1,135 @@
+.. -*- coding: utf-8 -*-
+
+Applications
+============
+
+VIFF has been used for several small and some larger applications. The
+largest applications are listed below. Please see the ``apps/``
+directory in VIFF for more examples of small programs using VIFF.
+
+
+Nordic Sugar
+------------
+
+In Denmark, the production of sugarbeet is managed by sugarbeet
+contracts. A sugarbeet contract determines the quantity of sugarbeet
+that a farmer is allowed to produce. Traditionally, sugarbeet
+contracts have been traded between individual pairs of farmers. This
+has been done in spite of the fact that trading in a central market
+was known to increase the overall profit. A central market has,
+however, not been possible due to conflicting interests and lack of
+trust between the parties.
+
+In January 2008 the first large scale secure multiparty computation
+was carried out, effectively solving this problem. This was done by
+the SIMAP research project as reported in "`Multiparty Computation
+Goes Live`__" (also published at `Financial Crypto 2009`__). In the
+summer of 2009 the same computation was successfully repeated, this
+time using VIFF.
+
+.. __: http://eprint.iacr.org/2008/068
+.. __: http://www.springerlink.com/content/j4772m44r05x0527/
+
+The computation was a double auction in which the production rights
+for several thousand tons of sugarbeets were traded. During the first
+weeks of the auction, several hundred Danish sugarbeet farmers
+submitted their encrypted bids to a central database. Then the actual
+computation took place between three players:
+
+* Nordic Sugar, the Danish sugar company
+
+* DKS, the consolidation of Danish sugarbeet farmers
+
+* Partisia, a Danish company specialized in secure multiparty
+  solutions
+
+The computation took about 15 minutes using three laptops on a LAN.
+Most of the computation time was spend converting the encrypted bids
+to secret sharings. The actual multiparty computation took only a
+couple of minutes. As a result, the sugarbeet contracts could be
+traded at an optimal price without any sensitive information being
+disclosed.
+
+Using secure multiparty computation, trading sugarbeets using this
+kind of auction was possible without finding and paying a trusted
+third party to manage the auction. Such a trusted party would---if it
+could be found at all---probably have been quite expensive.
+
+
+Distributed RSA
+---------------
+
+Atle Mauland from the Norwegian University of Science and Technology
+(NTNU) used VIFF for his Master's Thesis titled "`Realizing Distributed
+RSA using Secure Multiparty Computations`__". The `code is available
+for download`__.
+
+.. __: http://daim.idi.ntnu.no/masteroppgave?id=4699
+.. __: http://daim.idi.ntnu.no/vedlegg?id=4699
+
+The private key from a RSA key pair must be kept in a highly secure
+location (to prevent unauthorized persons from stealing it) but
+because we want to use the key, we cannot just write it on a piece of
+paper and store that in a safe.
+
+This tension between high availability and high security makes a
+distributed solution attractive. Atle Mauland implemented a protocol
+by Boneh and Franklin for generating RSA keys in a distributed
+fashion. The protocol ensures that the private key is never available
+in the clear to any given party and an attacker must break into all
+machines to learn the private key. Meanwhile, the parties can use
+their shares of the private key to securely decrypt messages encrypted
+under the public key.
+
+Generating a 1024-bit RSA key using VIFF took about 30 minutes on
+average (the time varied between 7 seconds and 2.5 hours). These
+results can likely be improved by using the GMPY library more
+aggressively.
+
+
+Distributed AES
+---------------
+
+The Advanced Encryption Standard (Rijndael) block cipher turns out to
+have nice arithmetic properties which makes its computation by
+arithmetic circuits relatively fast. Marcel Keller from the University
+of Aarhus has implemented a multiparty version of AES for VIFF.
+
+Using the :mod:`viff.aes` module, it is possible to securely
+compute a secret shared AES encrypted ciphertext of a (possibly)
+secret shared plaintext with a (possibly) secret shared key. The
+inputs have to be given either as a list of shares over
+:class:`~viff.field.GF256` (byte-wise) or as a string. The runtime has
+to be able to handle shares over GF256.
+
+Encrypting a 128-bit block using a 128-bit secret shared AES key takes
+about 2 seconds using three machines. Decryption is not implemented
+yet.
+
+
+Secure Voting
+-------------
+
+Typical Internet voting systems store all votes in a single location.
+Håvard Vegge  from the Norwegian University of Science and Technology
+(NTNU) used VIFF for his Master's Thesis titled "`Realizing Secure
+Multiparty Computations`__" to implement a distributed voting system.
+The `code is available for download`__.
+
+.. __: http://daim.idi.ntnu.no/masteroppgave?id=4559
+.. __: http://daim.idi.ntnu.no/vedlegg?id=4559
+
+The system removes the single point of failure by storing the votes in
+secret shared form between three servers. The voters will do the
+secret sharing on their own machine, encrypt the shares, and send the
+encrypted shares to a database. Each share is encrypted under the
+public key belonging to the computation server that will do the actual
+multiparty computation.
+
+This project shows how VIFF can be integrated with many other
+technologies. The user creates a vote on a website programmed in PHP
+and the voting is cast using a Java applet. The applet has the
+responsibility of encrypting the votes for the computation servers.
+When all voters have cast their vote, a XML-RPC message is sent to the
+Python program running on the servers. That program decrypts the
+shares and uses VIFF to compute the result.
