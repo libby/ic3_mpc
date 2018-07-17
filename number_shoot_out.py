@@ -101,22 +101,14 @@ class Protocol:
            # shutdown the server
            self.runtime.synchronize()
            self.runtime.shutdown()
-        elif self.runtime.id == 1 or self.runtime.id == 2:
+        else:
            self.guess = self.obtain_guess()
            print "Your number attack is %d" % self.guess
-           g1, g2 = self.mpc_share_guess(self.guess)
-           results = self.calc_round_results(g1, g2)
+           g1, g2, g3 = self.mpc_share_guess(self.guess)
+           results = self.calc_round_results(g1, g2, g3)
            print results
            results.addCallback(self.round_ready).addErrback(self.error)
            self.runtime.schedule_callback(results, lambda _: self.run_round())
-        else:
-           print " You are not a player node you are just a "
-           g1, g2 = self.mpc_share_guess(1)
-           results = self.calc_round_results(g1, g2)
-           print results
-           results.addCallback(self.round_ready).addErrback(self.error)
-           self.runtime.schedule_callback(results, lambda _: self.run_round())
-
 
     # obtain guess only if they are alive
     def obtain_guess(self):
@@ -148,20 +140,11 @@ class Protocol:
           print "sorry you're dead ignoring your input  %s " % self.runtime.id
           return self.runtime.shamir_share(alive_player_array, Zp, None)
         else:  
-          print "you're alive  your player num  %s " % self.runtime.id
-          print "alive  mcp %s " % alive_player_array 
-          if self.runtime.id == 1 or self.runtime.id == 2:
-            print "in 1,2 "  
-            g1, g2 = self.runtime.shamir_share([1, 2], Zp, guess)
-          else: 
-            print "in 3"
-            g1, g2 = self.runtime.shamir_share([1, 2], Zp)
-        print "caled g1 g2 "
-        print g1
-        print g2
-        return [g1, g2]
+          print "you're alive ignoring your input  %s " % self.runtime.id
+          print "alive  %s " % alive_player_array 
+          return self.runtime.shamir_share(alive_player_array, Zp, guess)
 
-    def calc_round_results(self, g1, g2):
+    def calc_round_results(self, g1, g2, g3):
         # Now that everybody has secret shared their inputs we can
         # compare them. We check to see if any of the players have
         # guessed another player's secret, in which case they kill
@@ -172,39 +155,41 @@ class Protocol:
         print g2
 
         one_dead     = (g2 == self.s1) # or (g3 == s1)
+        one_dead_2   = (g3 == self.s1)
         two_dead     = (g1 == self.s2) # or (g3 == s2)
+        two_dead_2   = (g3 == self.s2)
+        three_dead   = (g1 == self.s3) #or (g2 == s3)
+        three_dead_2 = (g2 == self.s3)
 
         # The results are secret shared, so we must open them before
         # we can do anything usefull with them. open in this case
         # means computing
         # open the secret shared results
         open_one_dead = self.runtime.open(one_dead)
+        open_one_dead_2 = self.runtime.open(one_dead_2)
         open_two_dead = self.runtime.open(two_dead)
-        return gather_shares([open_one_dead, open_two_dead])
+        open_two_dead_2 = self.runtime.open(two_dead_2)
+        open_three_dead = self.runtime.open(three_dead)
+        open_three_dead_2 = self.runtime.open(three_dead_2)
+        return gather_shares([open_one_dead, open_one_dead_2, open_two_dead, open_two_dead_2, open_three_dead, open_three_dead_2])
 
     def __init__(self, runtime):
         # Save the Runtime for later use
         self.runtime = runtime
-        lives = [False for p in runtime.players]
-        # Only two player are actually playing
-        # the other's are just for MPC
-        lives[0] = True
-        lives[1] = True
+        lives = [True for p in runtime.players]
         self.alive = lives
         print "Player's lives %s " % self.alive
         print "You are Player %d " % (runtime.id) 
         print "There are %d player in this game." % (len(runtime.players))
-        # we only play with two players, the others are only for MPC
-        if runtime.id == 1 or runtime.id == 2:
-          sys.stdout.write(RED)
-          sec_num = input("Enter a secret number for you opponent to guess (1 - 20): ")
-          sys.stdout.write(RESET)
-          print "Your secret is: ", sec_num
-          # This is the value we will use in the protocol.
-          self.sec_num = sec_num
-          # This is also a secret shared value we will use in the protocol.
-          self.guess = self.obtain_guess()
-          print "Your number attack is %d" % self.guess
+        sys.stdout.write(RED)
+        sec_num = input("Enter a secret number for you opponent to guess (1 - 20): ")
+        sys.stdout.write(RESET)
+        print "Your secret is: ", sec_num
+        # This is the value we will use in the protocol.
+        self.sec_num = sec_num
+        # This is also a secret shared value we will use in the protocol.
+        self.guess = self.obtain_guess()
+        print "Your number attack is %d" % self.guess
 
         # For the comparison protocol to work, we need a field modulus
         # bigger than 2**(l+1) + 2**(l+k+1), where the bit length of
@@ -218,28 +203,25 @@ class Protocol:
 
         # We must secret share our input with the other parties. They
         # will do the same and we end up with three variables
-        if runtime.id == 1 or runtime.id == 2:
-          print "I'm player 1 2 get my shares"
-          self.s1, self.s2 = runtime.shamir_share([1, 2], Zp, self.sec_num)
-          g1, g2 = runtime.shamir_share([1, 2], Zp, self.guess)
-        else:
-          print "I'm player 3 don't get my shares"
-          self.s1, self.s2 = runtime.shamir_share([1, 2], Zp)
-          g1, g2 = runtime.shamir_share([1, 2], Zp)
-        print "g1 g2 calc"
-        print g1
-        print g2
-        results = self.calc_round_results(g1, g2)
+        self.s1, self.s2, self.s3 = runtime.shamir_share([1, 2, 3], Zp, self.sec_num)
+        g1, g2, g3 = runtime.shamir_share([1, 2, 3], Zp, self.guess)
+        results = self.calc_round_results(g1, g2, g3)
         results.addCallback(self.round_ready)
         runtime.schedule_callback(results, lambda _: self.run_round())
 
     def round_ready(self, results):
         p1_is_dead = results[0] 
-        p2_is_dead = results[1] 
-        if p1_is_dead: 
+        p1_is_dead_2 = results[1] 
+        p2_is_dead = results[2] 
+        p2_is_dead_2 = results[3] 
+        p3_is_dead = results[4] 
+        p3_is_dead_2= results[5] 
+        if p1_is_dead or p1_is_dead_2:
           self.alive[0] = False
-        if p2_is_dead:
+        if p2_is_dead or p2_is_dead_2:
           self.alive[1] = False
+        if p3_is_dead or p3_is_dead_2:
+          self.alive[2] = False
 
 # Parse command line arguments.
 parser = OptionParser()
