@@ -64,3 +64,34 @@ $ python main_loop.py
 carrier (length 5) default: 0 0 0? 0 3 3
 ...
 ```
+
+# using docker-compose
+
+In one shell, generate config files for players:
+
+```bash
+$ docker-compose up config
+```
+
+In 3 seperate shells:
+
+player 1:
+
+```bash
+$ docker-compose run --rm --name p1 p1 bash
+(container) python number_shoot_out.py --no-ssl player-1.ini
+```
+
+player 2:
+
+```bash
+$ docker-compose run --rm --name p2 p2 bash
+(container) python number_shoot_out.py --no-ssl player-2.ini
+```
+
+player 3:
+
+```bash
+$ docker-compose run --rm --name p3 p3 bash
+(container) python number_shoot_out.py --no-ssl player-3.ini
+```
