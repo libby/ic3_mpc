@@ -19,11 +19,48 @@ $> ./launch_ships.sh
 ```
 
 # generate the config file 
+```
 $> python generate-config-files.py -n 3 -t 1 localhost:9001 localhost:9002 localhost:9003
+```
 
 # run scratch project
+```
 $> python battleship.py --no-ssl player-1.ini
 $> python battleship.py --no-ssl player-2.ini
 $> python battleship.py --no-ssl player-3.ini
 ```
 
+# running the main loop
+_Work in progress_
+
+```bash
+$ pip install future
+```
+
+```bash
+$ python main_loop.py
+Welcome to the MPC Battleship game. Type help or ? to list commands.
+
+(battleship)
+```
+
+```bash
+(battleship) help
+
+Documented commands (type help <topic>):
+========================================
+board  help
+
+Undocumented commands:
+======================
+recv_attack  send_attack  show_board
+
+(battleship)
+```
+
+```bash
+$ python main_loop.py
+(battleship) board
+carrier (length 5) default: 0 0 0? 0 3 3
+...
+```
