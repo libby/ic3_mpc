@@ -105,18 +105,19 @@ class Protocol:
            self.guess = self.obtain_guess()
            print "Your number attack is %d" % self.guess
            g1, g2 = self.mpc_share_guess(self.guess)
-           results = self.calc_round_results(g1, g2)
+           #results = self.calc_round_results(g1, g2)
+           results = self.check_hits(g1, g2)
            print results
            results.addCallback(self.round_ready).addErrback(self.error)
            self.runtime.schedule_callback(results, lambda _: self.run_round())
         else:
-           print " You are not a player node you are just a "
-           g1, g2 = self.mpc_share_guess(1)
-           results = self.calc_round_results(g1, g2)
+           print " You are not a player node you are just making us secure."
+           g1, g2 = self.mpc_share_guess(0)
+           #results = self.calc_round_results(g1, g2)
+           results = self.check_hits(g1, g2)
            print results
            results.addCallback(self.round_ready).addErrback(self.error)
            self.runtime.schedule_callback(results, lambda _: self.run_round())
-
 
     # obtain guess only if they are alive
     def obtain_guess(self):
@@ -142,7 +143,7 @@ class Protocol:
         # for a dead person's input.
         # TODO: only require the living players to respond.
         alive_player_array = self.alive_players()
-     #  alive_player_array = [1, 2, 3]
+       #  alive_player_array = [1, 2, 3]
        # return self.runtime.shamir_share([1, 2, 3], Zp, guess)
         if not self.alive[self.runtime.id - 1]:
           print "sorry you're dead ignoring your input  %s " % self.runtime.id
@@ -161,6 +162,24 @@ class Protocol:
         print g2
         return [g1, g2]
 
+    # did any one hit a ship?
+    def is_hit(self, guess, ship):
+        hit = (guess == ship)
+        open_hit = self.runtime.open(one_dead)
+        return gather_shares([open_hit])
+
+    def check_hits(self, g1, g2):
+        print "calculating hits"
+        p1_hit = (g2 == self.p1_ship1)
+        p2_hit = (g1 == self.p2_ship1)
+
+        print "got p1 an p2"
+        open_p1_hit = self.runtime.open(p1_hit)
+        open_p2_hit = self.runtime.open(p2_hit)
+        print "opened p1 an p2"
+        return gather_shares([open_p1_hit, open_p2_hit])
+        
+
     def calc_round_results(self, g1, g2):
         # Now that everybody has secret shared their inputs we can
         # compare them. We check to see if any of the players have
@@ -171,8 +190,8 @@ class Protocol:
         # TODO: can we do 'or'?
         print g2
 
-        one_dead     = (g2 == self.s1) # or (g3 == s1)
-        two_dead     = (g1 == self.s2) # or (g3 == s2)
+        one_dead     = (g2 == self.p1_ship1) # or (g3 == s1)
+        two_dead     = (g1 == self.p2_ship2) # or (g3 == s2)
 
         # The results are secret shared, so we must open them before
         # we can do anything usefull with them. open in this case
@@ -185,6 +204,14 @@ class Protocol:
     def __init__(self, runtime):
         # Save the Runtime for later use
         self.runtime = runtime
+        # to start with there are no hits
+        # we will record the ship hits here.
+        self.hit_list = []
+        self.total_num_ships = 1
+        # there are only two actual players, the other
+        # "players" are only there to run MPC.
+        self.is_player = runtime.id == 1 or runtime.id == 2
+
         lives = [False for p in runtime.players]
         # Only two player are actually playing
         # the other's are just for MPC
@@ -197,11 +224,14 @@ class Protocol:
         # we only play with two players, the others are only for MPC
         if runtime.id == 1 or runtime.id == 2:
           sys.stdout.write(RED)
-          sec_num = input("Enter a secret number for you opponent to guess (1 - 20): ")
+          ship1 = input("Enter your ship 1: ")
+          ship2 = input("Enter your ship 2: ")
+          ship3 = input("Enter your ship 3: ")
           sys.stdout.write(RESET)
-          print "Your secret is: ", sec_num
           # This is the value we will use in the protocol.
-          self.sec_num = sec_num
+          self.ship1 = ship1 
+          self.ship2 = ship2
+          self.ship3 = ship3 
           # This is also a secret shared value we will use in the protocol.
           self.guess = self.obtain_guess()
           print "Your number attack is %d" % self.guess
@@ -216,29 +246,79 @@ class Protocol:
         k = runtime.options.security_parameter
         Zp = GF(find_prime(2**(l + 1) + 2**(l + k + 1), blum=True))
 
-        # We must secret share our input with the other parties. They
-        # will do the same and we end up with three variables
-        if runtime.id == 1 or runtime.id == 2:
-          print "I'm player 1 2 get my shares"
-          self.s1, self.s2 = runtime.shamir_share([1, 2], Zp, self.sec_num)
+        # We must secret share our ships with the other parties. They
+        # will do the same and we end up secretly having each other's
+        # ships.
+        if self.is_player:
+          print "I'm player 1 2 get my secret ships as"
+          print "ship 1 %s " % self.ship1
+          print "ship 2 %s " % self.ship2
+          print "ship 3 %s " % self.ship3
+          self.p1_ship1, self.p2_ship1 = runtime.shamir_share([1, 2], Zp, self.ship1)
+          self.p1_ship2, self.p2_ship2 = runtime.shamir_share([1, 2], Zp, self.ship2)
+          self.p1_ship3, self.p2_ship3 = runtime.shamir_share([1, 2], Zp, self.ship3)
           g1, g2 = runtime.shamir_share([1, 2], Zp, self.guess)
         else:
           print "I'm player 3 don't get my shares"
-          self.s1, self.s2 = runtime.shamir_share([1, 2], Zp)
+          self.p1_ship1, self.p2_ship1 = runtime.shamir_share([1, 2], Zp)
+          self.p1_ship2, self.p2_ship2 = runtime.shamir_share([1, 2], Zp)
+          self.p1_ship3, self.p2_ship3 = runtime.shamir_share([1, 2], Zp)
           g1, g2 = runtime.shamir_share([1, 2], Zp)
-        print "g1 g2 calc"
-        print g1
-        print g2
-        results = self.calc_round_results(g1, g2)
-        results.addCallback(self.round_ready)
-        runtime.schedule_callback(results, lambda _: self.run_round())
+        print "going to init board"
+        self.p1_board, self.p2_board = self.init_secret_board(l, k, Zp)
+        print "printin p1 %s" % self.p1_board
+        print "printing p2 %s" % self.p2_board
+        # now we have secret shared the ships, board and the guess
+        # the ships will not change, but we will have to update the
+        # board and the guess for each round, as we will never learn
+        # about the ships values, but only that we hit one, or didn't
+        # hit one.
+        self.run_round()
+#        results = self.check_hits(g1, g2)
+#        results.addCallback(self.round_ready)
+#        runtime.schedule_callback(results, lambda _: self.run_round())
+        #results = self.place_ships_ons__board()
+        #runtime.schedule_callback(results, lambda _: self.run_round())
+
+    def init_secret_board(self, l, k, Zp):
+       board = [0 for i in range(0, 20)]
+       p1_sec_board = []
+       p2_sec_board = []
+
+       for b in board:
+         if self.is_player:
+           print "p1 p2"
+           p1_cell, p2_cell = self.runtime.shamir_share([1, 2], Zp, b)
+         else:
+           print "p3"
+           p1_cell, p2_cell = self.runtime.shamir_share([1, 2], Zp)
+         
+         p1_sec_board.append(p1_cell)
+         p2_sec_board.append(p2_cell)
+         print "appended to board"
+       #print "p1 inner %s" % p1_sec_board
+       #print "p2 inner %s" % p2_sec_board
+       return p1_sec_board, p2_sec_board
+
+    # right now just working with single number ships
+  #  def place_ships_on_board(self, ships):
+  #      print "calculating hits"
+  #      p1_hit = (g2 == self.p1_ship1)
+  #      p2_hit = (g1 == self.p2_ship1)
+
+  #      print "got p1 an p2"
+  #      open_p1_hit = self.runtime.open(p1_hit)
+  #      open_p2_hit = self.runtime.open(p2_hit)
+  #      print "opened p1 an p2"
+  #      return gather_shares([open_p1_hit, open_p2_hit])
 
     def round_ready(self, results):
-        p1_is_dead = results[0] 
-        p2_is_dead = results[1] 
-        if p1_is_dead: 
+        print "round ready"
+        p1_hit = results[0] 
+        p2_hit = results[1] 
+        if p1_hit: 
           self.alive[0] = False
-        if p2_is_dead:
+        if p2_hit:
           self.alive[1] = False
 
 # Parse command line arguments.
