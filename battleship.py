@@ -64,31 +64,40 @@ class Protocol:
         print res
 
     def num_living(self):
-        the_living = filter(lambda is_alive: is_alive, self.alive)
+        print "in num livesing"
+        print self.lives
+        the_living = filter(lambda x: x > 0, self.lives)
+        print "the living %s " % the_living
         return len(the_living)
 
     def alive_players(self):
         alive_players = []
-        for i in range(0, len(self.alive)):
-          if self.alive[i]:
+        for i in range(0, len(self.lives)):
+          if self.lives[i] > 0:
             alive_players.append(i + 1)
         return alive_players
 
+    def is_alive(self): 
+      return (self.lives[self.runtime.id - 1] > 0)
+
     def run_round(self):
         print "Starting another round."
-        print "Player's lives %s " % self.alive
-        print "Player numbers %s " % self.alive_players()
-
-        if not self.alive[self.runtime.id - 1]:
+        print "Player's lives %s " % self.lives
+        print "Test"
+        print "num living %s" % self.num_living()
+        print "Player naumbers %s " % self.alive_players()
+        print "is alive %s" % self.is_alive()
+    
+        if not self.is_alive():
             sys.stdout.write(RED)
             print "You are dead."
             sys.stdout.write(RESET)
         
         if self.num_living() == 1:
            sys.stdout.write(GREEN)
-           winner = self.alive.index(True) + 1
+           winner = "TBD" #self.alive.index(True) + 1
            print "We have a winner!"
-           print "Player %d won!" % winner
+           print "Player %s won!" % winner
            sys.stdout.write(RESET)
            # shutdown the server
            self.runtime.synchronize()
@@ -101,7 +110,8 @@ class Protocol:
            # shutdown the server
            self.runtime.synchronize()
            self.runtime.shutdown()
-        elif self.runtime.id == 1 or self.runtime.id == 2:
+        elif self.is_player: 
+           #if self.p1_lives_prev  
            self.guess = self.obtain_guess()
            print "Your number attack is %d" % self.guess
            g1, g2 = self.mpc_share_guess(self.guess)
@@ -110,7 +120,7 @@ class Protocol:
            results.addCallback(self.round_ready).addErrback(self.error)
            self.runtime.schedule_callback(results, lambda _: self.run_round())
         else:
-           print " You are not a player node you are just making us secure."
+           print "You are not a player node you are just making us secure."
            g1, g2 = self.mpc_share_guess(0)
            results = self.check_hits(g1, g2)
            print results
@@ -141,13 +151,13 @@ class Protocol:
         # for a dead person's input.
         # TODO: only require the living players to respond.
         alive_player_array = self.alive_players()
-        if not self.alive[self.runtime.id - 1]:
+        if not self.lives[self.runtime.id - 1] > 0:
           print "sorry you're dead ignoring your input  %s " % self.runtime.id
           return self.runtime.shamir_share(alive_player_array, Zp, None)
         else:  
           print "you're alive  your player num  %s " % self.runtime.id
           print "alive  mcp %s " % alive_player_array 
-          if self.runtime.id == 1 or self.runtime.id == 2:
+          if self.is_player:
             print "in 1,2 "  
             g1, g2 = self.runtime.shamir_share([1, 2], Zp, guess)
           else: 
@@ -211,13 +221,17 @@ class Protocol:
         # "players" are only there to run MPC.
         self.is_player = (runtime.id == 1 or runtime.id == 2)
 
-        lives = [False for p in runtime.players]
+        lives = [0 for p in runtime.players]
         # Only two player are actually playing
         # the other's are just for MPC
-        lives[0] = True
-        lives[1] = True
-        self.alive = lives
-        print "Player's lives %s " % self.alive
+        lives[0] = 3 
+        lives[1] = 3 
+
+        self.p1_lives_prev = 3
+        self.p2_lives_prev = 3
+
+        self.lives = lives
+        print "Player's lives %s " % self.lives
         print "You are Player %d " % (runtime.id) 
         print "There are %d player in this game." % (len(runtime.players))
         # we only play with two players, the others are only for MPC
@@ -300,9 +314,9 @@ class Protocol:
         p1_hit_s3 = results[4] 
         p2_hit_s3 = results[5] 
         if p1_hit_s1 or p1_hit_s2 or p1_hit_s3: 
-          self.alive[0] = False
+          self.lives[0] = self.lives[0] - 1 
         if p2_hit_s1 or p2_hit_s2 or p2_hit_s3: 
-          self.alive[1] = False
+          self.lives[1] = self.lives[1] - 1 
 
 # Parse command line arguments.
 parser = OptionParser()
