@@ -1,0 +1,8 @@
+graft doc/api
+
+graft doc/html
+prune doc/html/.doctrees
+exclude doc/conf.py
+
+exclude MANIFEST.in
+exclude run.py

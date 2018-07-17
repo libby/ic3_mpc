@@ -1,0 +1,89 @@
+.. -*- coding: utf-8 -*-
+
+Coding Style
+============
+
+The VIFF code tries to follow the coding style laid out in :pep:`8`,
+which you should read or at least skim over. You can check your code
+against by running the pep8.py_ checker.
+
+.. _pep8.py: http://svn.browsershots.org/trunk/devtools/pep8/pep8.py
+
+
+The VIFF Coding Style in Short
+------------------------------
+
+A summary of the rules:
+
+* Use four spaces for indention, never tabs.
+
+  .. epigraph::
+
+     Thus spake the Lord: *Thou shalt indent with four spaces. No
+     more, no less. Four shall be the number of spaces thou shalt
+     indent, and the number of thy indenting shall be four. Eight
+     shalt thou not indent, nor either indent thou two, excepting that
+     thou then proceed to four. Tabs are right out.*
+
+     -- Georg Brandl
+
+* Use a single space around binary operators.
+
+* Name classes using ``CamelCase``.
+
+* Name variables, function, and methods using lowercase words like
+  ``foo_bar``.
+
+* Write docstrings for your functions and methods. Include test for
+  doctest_ if possible.
+
+  .. _doctest: http://docs.python.org/lib/module-doctest.html
+
+* Try to be consistent.
+
+These rules are there to make the source code more readable for both
+old and new people.
+
+The Twisted Coding Style
+------------------------
+
+VIFF uses Twisted_ and their code follows a slightly different coding
+style. Their style is closer to the style used in Java where functions
+and methods are named ``fooBar`` instead of ``foo_bar``.
+
+When writing code which is close to Twisted code, you might want to
+follow that style too. If you subclass a Twisted class to override
+some behavior, you might be forced to follow their style.
+
+If you have a choice, then you should only use the Twisted style if
+you expect people to call both your code and the Twisted code — if
+people will only call your code, then please follow the standard VIFF
+coding style.
+
+.. _Twisted: http://twistedmatrix.com/
+
+Hints for indexed variables
+---------------------------
+
+When the code is based on a mathematical text, one often sees lots of
+*b*\ :sub:`i` variables. A nice way to deal with those in code is to
+consider them part of a list called ``b`` and create it like this::
+
+  b = [self.rt.prss_share_random(Zp, binary=True)
+       for _ in range(k)]
+
+It is not a good idea to name the list ``bi`` since that is what you
+would want to call the elements in the list::
+
+  x = [bi * bi for bi in b]
+
+If the index of the current element is needed::
+
+  number = sum([2**i * bi for i, bi in enumerate(b)])
+
+If you want to work with the list by index, you get the nice
+correspondence between *b*\ :sub:`i` and ``b[i]``::
+
+  z = 0
+  for in range(k)
+    z += b[i] + x[k - i]

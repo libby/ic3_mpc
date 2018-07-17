@@ -1,0 +1,18 @@
+
+PRSS Module
+===========
+
+.. automodule:: viff.prss
+
+   .. autoclass:: PRF
+      :members: __call__
+
+   .. autofunction:: prss
+
+   .. autofunction:: prss_lsb
+
+   .. autofunction:: random_replicated_sharing
+
+   .. autofunction:: convert_replicated_shamir
+
+   .. autofunction:: generate_subsets

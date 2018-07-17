@@ -1,0 +1,26 @@
+
+A Thresholdbased Actively Secure Runtime
+========================================
+
+.. automodule:: viff.active
+
+   .. autoclass:: ActiveRuntime
+      :members:
+
+      .. inheritance-diagram:: ActiveRuntime
+         :parts: 1
+
+   .. autoclass:: BasicActiveRuntime
+      :members:
+
+      .. inheritance-diagram:: BasicActiveRuntime
+         :parts: 1
+
+   .. autoclass:: BrachaBroadcastMixin
+      :members:
+
+   .. autoclass:: TriplesHyperinvertibleMatricesMixin
+      :members:
+
+   .. autoclass:: TriplesPRSSMixin
+      :members:

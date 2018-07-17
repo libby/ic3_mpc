@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  p1:
+    build:
+      context: viff
+      dockerfile: Dockerfile
+    volumes:
+      - ./viff:/usr/src/viff
+      - ./battleship.py:/usr/src/viff/apps/battleship.py
+    ports:
+      - "9000"
+    working_dir: /usr/src/viff/apps
+    command: python battleship.py --no-ssl player-1.ini
+  p2:
+    build:
+      context: viff
+      dockerfile: Dockerfile
+    volumes:
+      - ./viff:/usr/src/viff
+      - ./battleship.py:/usr/src/viff/apps/battleship.py
+    ports:
+      - "9000"
+    working_dir: /usr/src/viff/apps
+    command: python battleship.py --no-ssl player-2.ini
+  p3:
+    build:
+      context: viff
+      dockerfile: Dockerfile
+    volumes:
+      - ./viff:/usr/src/viff
+      - ./battleship.py:/usr/src/viff/apps/battleship.py
+    ports:
+      - "9000"
+    working_dir: /usr/src/viff/apps
+    command: python battleship.py --no-ssl player-3.ini
+
+  config:
+    build:
+      context: viff
+      dockerfile: Dockerfile
+    volumes:
+      - ./viff:/usr/src/viff
+    ports:
+      - "9000"
+    working_dir: /usr/src/viff/apps
+    command: python generate-config-files.py p1:9000 p2:9000 p3:9000

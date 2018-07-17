@@ -1,0 +1,51 @@
+# This is actually not a -*- shell-script -*- but the syntax is
+# close enough...
+
+# Use shell glob syntax (the alternative is Python regexp syntax).
+syntax: glob
+
+*.pyc
+
+# Ignore backup files.
+*~
+*.bak
+*.orig
+
+
+# Keys and certificates.
+*-[1-9]*.{ini,cert,key}
+ca.{cert,key}
+
+# Trial output directory.
+_trial_temp
+dropin.cache
+
+# Benchmarking data.
+profile.data
+*.prof
+*.pstats
+
+# LaTeX outputs.
+# *.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
+
+# Distutils generated files.
+build
+dist
+MANIFEST
+AUTHORS
+INSTALL
+
+# Epydoc and Sphinx generated output.
+doc/{api,html}
+
+# Trace2html.py's standard output directory.
+coverage_dir
+
+# Eclipse project files
+.project
+
+# Eclipse PyDev extension project files.
+.pydevproject
+
+# Eclipse settings.
+.settings
