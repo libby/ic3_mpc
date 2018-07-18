@@ -31,6 +31,7 @@
 # Give a player configuration file as a command line argument or run
 # the example with '--help' for help with the command line options.
 
+from collections import defaultdict
 from optparse import OptionParser
 import viff.reactor
 viff.reactor.install()
@@ -54,6 +55,11 @@ RESET = "\033[0;0m"
 BOLD    = "\033[;1m"
 REVERSE = "\033[;7m"
 
+
+SHIPS = {
+    'Cruiser': (None for _ in range(3)),
+    'Submarine': (None for _ in range(3)),
+}
 # We start by defining the protocol, it will be started at the bottom
 # of the file.
 # http://krondo.com/a-second-interlude-deferred/
@@ -173,22 +179,17 @@ class Protocol:
 
     def check_hits(self, g1, g2):
         print "calculating hits"
-        p1_hit_s1 = (g2 == self.p1_ship1)
-        p2_hit_s1 = (g1 == self.p2_ship1)
-        p1_hit_s2 = (g2 == self.p1_ship2)
-        p2_hit_s2 = (g1 == self.p2_ship2)
-        p1_hit_s3 = (g2 == self.p1_ship3)
-        p2_hit_s3 = (g1 == self.p2_ship3)
-
-        open_p1_hit_s1 = self.runtime.open(p1_hit_s1)
-        open_p2_hit_s1 = self.runtime.open(p2_hit_s1)
-        open_p1_hit_s2 = self.runtime.open(p1_hit_s2)
-        open_p2_hit_s2 = self.runtime.open(p2_hit_s2)
-        open_p1_hit_s3 = self.runtime.open(p1_hit_s3)
-        open_p2_hit_s3 = self.runtime.open(p2_hit_s3)
-        return gather_shares([open_p1_hit_s1, open_p2_hit_s1, open_p1_hit_s2, open_p2_hit_s2, open_p1_hit_s3, open_p2_hit_s3])
+        all_shares = [
+            self.runtime.open(g2 == share)
+            for shipname, shares in self.p1_shares.items() for share in shares
+        ]
+        all_shares.extend([
+            self.runtime.open(g1 == share)
+            for shipname, shares in self.p2_shares.items() for share in shares
+        ])
+        print 'gathering shares: {}'.format(all_shares)
+        return gather_shares(all_shares)
         
-
     def calc_round_results(self, g1, g2):
         # Now that everybody has secret shared their inputs we can
         # compare them. We check to see if any of the players have
@@ -216,7 +217,10 @@ class Protocol:
         # to start with there are no hits
         # we will record the ship hits here.
         self.hit_list = []
-        self.total_num_ships = 1
+        self.my_coords = SHIPS
+        self.p1_shares = defaultdict(list)
+        self.p2_shares = defaultdict(list)
+
         # there are only two actual players, the other
         # "players" are only there to run MPC.
         self.is_player = (runtime.id == 1 or runtime.id == 2)
@@ -237,15 +241,13 @@ class Protocol:
         # we only play with two players, the others are only for MPC
 
         if self.is_player:
-          sys.stdout.write(RED)
-          ship1 = input("Enter your ship 1: ")
-          ship2 = input("Enter your ship 2: ")
-          ship3 = input("Enter your ship 3: ")
-          sys.stdout.write(RESET)
-          # This is the value we will use in the protocol.
-          self.ship1 = ship1
-          self.ship2 = ship2
-          self.ship3 = ship3
+            sys.stdout.write(RED)
+            print ("Enter the coordinates of your ships, in tuple form, "
+                   "(e.g.: (5, 15, 25) for a ship of length 3 occupying "
+                   "cells (0, 5), (1, 5), (2, 5)")
+            for shipname in SHIPS:
+                self.my_coords[shipname] = input("{}: ".format(shipname))
+            sys.stdout.write(RESET)
 
         # For the comparison protocol to work, we need a field modulus
         # bigger than 2**(l+1) + 2**(l+k+1), where the bit length of
@@ -261,18 +263,20 @@ class Protocol:
         # will do the same and we end up secretly having each other's
         # ships.
         if self.is_player:
-          print "I'm player 1 2 get my secret ships as"
-          print "ship 1 %s " % self.ship1
-          print "ship 2 %s " % self.ship2
-          print "ship 3 %s " % self.ship3
-          self.p1_ship1, self.p2_ship1 = runtime.shamir_share([1, 2], Zp, self.ship1)
-          self.p1_ship2, self.p2_ship2 = runtime.shamir_share([1, 2], Zp, self.ship2)
-          self.p1_ship3, self.p2_ship3 = runtime.shamir_share([1, 2], Zp, self.ship3)
+            print "I'm player 1 2 get my secret ships as"
         else:
-          print "I'm here just to help with MPC. I don't affect this game."
-          self.p1_ship1, self.p2_ship1 = runtime.shamir_share([1, 2], Zp)
-          self.p1_ship2, self.p2_ship2 = runtime.shamir_share([1, 2], Zp)
-          self.p1_ship3, self.p2_ship3 = runtime.shamir_share([1, 2], Zp)
+            print "I'm here just to help with MPC. I don't affect this game."
+
+        for shipname, coordinates in self.my_coords.items():
+            if runtime.id in (1, 2):
+                print '{} {}'.format(shipname, coordinates)
+            for xy in coordinates:
+                p1_shares, p2_shares = runtime.shamir_share([1, 2],
+                                                            Zp,
+                                                            number=xy)
+                self.p1_shares[shipname].append(p1_shares)
+                self.p2_shares[shipname].append(p2_shares)
+
         ## TODO: we don't neat a board for our first design.
         # self.p1_board, self.p2_board = self.init_secret_board(l, k, Zp)
 
