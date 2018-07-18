@@ -1,0 +1,7 @@
+
+run_mill() {
+  echo "python generate-config-files.py -n 3 -t 1 localhost:9001 localhost:9002 localhost:9003"
+  echo "python millionaires.py --no-ssl --statistics --deferred-debug player-1.ini"
+}
+
+alias stop_battle="tmux kill-session -t battle"
