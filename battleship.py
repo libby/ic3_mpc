@@ -72,10 +72,10 @@ class Protocol:
         print res
 
     def num_living(self):
-        print "in num livesing"
-        print self.lives
+        # print "in num livesing"
+        # print self.lives
         the_living = filter(lambda x: x > 0, self.lives)
-        print "the living %s " % the_living
+        # print "the living %s " % the_living
         return len(the_living)
 
     def alive_players(self):
@@ -90,11 +90,11 @@ class Protocol:
 
     def run_round(self):
         print "Starting another round."
-        print "Player's lives %s " % self.lives
-        print "Test"
-        print "num living %s" % self.num_living()
-        print "Player naumbers %s " % self.alive_players()
-        print "is alive %s" % self.is_alive()
+        # print "Player's lives %s " % self.lives
+        # print "Test"
+        # print "num living %s" % self.num_living()
+        # print "Player naumbers %s " % self.alive_players()
+        # print "is alive %s" % self.is_alive()
 
         if not self.is_alive():
             sys.stdout.write(RED)
@@ -303,7 +303,7 @@ class Protocol:
                 starting = str(coords[1]) + str(coords[2])
                 coordinates[0] = starting
 
-                if coords[0] == 'v':
+                if coords[0] == 'h':
                     for x in range(1, length):
                         coordinates[x] = str(coords[1]) + str(coords[2] + x)
                 else:
