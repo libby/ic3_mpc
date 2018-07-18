@@ -228,8 +228,8 @@ class Protocol:
         lives = [0 for p in runtime.players]
         # Only two player are actually playing
         # the other's are just for MPC
-        lives[0] = 3 
-        lives[1] = 3 
+        lives[0] = 6
+        lives[1] = 6 
 
         self.p1_lives_prev = 3
         self.p2_lives_prev = 3
@@ -263,7 +263,7 @@ class Protocol:
         # will do the same and we end up secretly having each other's
         # ships.
         if self.is_player:
-            print "I'm player 1 2 get my secret ships as"
+            print "I'm actual player %d get my secret ships as" % self.runtime.id
         else:
             print "I'm here just to help with MPC. I don't affect this game."
 
@@ -311,16 +311,40 @@ class Protocol:
 
     def round_ready(self, results):
         print "round ready"
-        p1_hit_s1 = results[0] 
-        p2_hit_s1 = results[1] 
-        p1_hit_s2 = results[2] 
-        p2_hit_s2 = results[3] 
-        p1_hit_s3 = results[4] 
-        p2_hit_s3 = results[5] 
-        if p1_hit_s1 or p1_hit_s2 or p1_hit_s3: 
-          self.lives[0] = self.lives[0] - 1 
-        if p2_hit_s1 or p2_hit_s2 or p2_hit_s3: 
-          self.lives[1] = self.lives[1] - 1 
+        # print "results length %d" % len(results)
+        # p1_hit_s1 = results[0] 
+        # p2_hit_s1 = results[1] 
+        # p1_hit_s2 = results[2] 
+        # p2_hit_s2 = results[3] 
+        # p1_hit_s3 = results[4] 
+        # p2_hit_s3 = results[5]
+        # p2_hit_s1 = results[6]
+        # p2_hit_s2 = results[7]
+        # p2_hit_s3 = results[8]
+        # p2_hit_s4 = results[9]
+        # print "p1_hit_s1 is %r" % p1_hit_s1
+        # print "p2_hit_s1 is %r" % p2_hit_s1
+        # print "p1_hit_s2 is %r" % p1_hit_s2
+        # print "p2_hit_s2 is %r" % p2_hit_s2
+        # print "p1_hit_s3 is %r" % p1_hit_s3
+        # print "p2_hit_s3 is %r" % p2_hit_s3
+        for result in results:
+          print result 
+        hit_p1 = False
+        for result in results[0:len(results)/2]:
+          # print "p1 result %r" % result
+          hit_p1 = hit_p1 or result
+        hit_p2 = False
+        for result in results[len(results)/2:-1]:
+          hit_p2 = hit_p2 or result
+        if hit_p1:
+          print "Player 1 got hit!" 
+          self.lives[0] = self.lives[0] - 1
+        if hit_p2:
+          print "Player 2 got hit!" 
+          self.lives[1] = self.lives[1] - 1
+        # if p2_hit_s1 or p2_hit_s2 or p2_hit_s3: 
+        #   self.lives[1] = self.lives[1] - 1 
 
 # Parse command line arguments.
 parser = OptionParser()
