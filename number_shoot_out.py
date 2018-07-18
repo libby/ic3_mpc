@@ -101,10 +101,17 @@ class Protocol:
            # shutdown the server
            self.runtime.synchronize()
            self.runtime.shutdown()
-        else:
+        if self.alive[self.runtime.id - 1]:
            self.guess = self.obtain_guess()
            print "Your number attack is %d" % self.guess
            g1, g2, g3 = self.mpc_share_guess(self.guess)
+           results = self.calc_round_results(g1, g2, g3)
+           print results
+           results.addCallback(self.round_ready).addErrback(self.error)
+           self.runtime.schedule_callback(results, lambda _: self.run_round())
+        else:
+           print "You are not a player node you are just making us secure."
+           g1, g2, g3 = self.mpc_share_guess(100)
            results = self.calc_round_results(g1, g2, g3)
            print results
            results.addCallback(self.round_ready).addErrback(self.error)
@@ -139,7 +146,7 @@ class Protocol:
         if not self.alive[self.runtime.id - 1]:
           print "sorry you're dead ignoring your input  %s " % self.runtime.id
           #return self.runtime.shamir_share(alive_player_array, Zp)
-          return self.runtime.shamir_share(alive_player_array, Zp, 1)
+          return self.runtime.shamir_share(alive_player_array, Zp, 0)
         else:  
           print "you're alive ignoring your input  %s " % self.runtime.id
           print "alive  %s " % alive_player_array 
@@ -183,7 +190,7 @@ class Protocol:
         print "You are Player %d " % (runtime.id) 
         print "There are %d player in this game." % (len(runtime.players))
         sys.stdout.write(RED)
-        sec_num = input("Enter a secret number for you opponent to guess (1 - 20): ")
+        sec_num = input("Enter a secret number for you opponent to guess (1 - 10): ")
         sys.stdout.write(RESET)
         print "Your secret is: ", sec_num
         # This is the value we will use in the protocol.
