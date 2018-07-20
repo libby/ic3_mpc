@@ -223,21 +223,27 @@ class Protocol:
         if p3_is_dead or p3_is_dead_2:
           self.alive[2] = False
 
-# Parse command line arguments.
-parser = OptionParser()
-Toft05Runtime.add_options(parser)
-options, args = parser.parse_args()
 
-if len(args) == 0:
-    parser.error("you must specify a config file")
-else:
-    id, players = load_config(args[0])
-#print players
-#print options
-# Create a deferred Runtime and ask it to run our protocol when ready.
-runtime_class = make_runtime_class(mixins=[Toft05Runtime, ProbabilisticEqualityMixin])
-pre_runtime = create_runtime(id, players, 1, options,runtime_class)
-pre_runtime.addCallback(Protocol)
+def main():
+    # Parse command line arguments.
+    parser = OptionParser()
+    Toft05Runtime.add_options(parser)
+    options, args = parser.parse_args()
 
-# Start the Twisted event loop.
-reactor.run()
+    if len(args) == 0:
+        parser.error("you must specify a config file")
+    else:
+        id, players = load_config(args[0])
+    #print players
+    #print options
+    # Create a deferred Runtime and ask it to run our protocol when ready.
+    runtime_class = make_runtime_class(mixins=[Toft05Runtime, ProbabilisticEqualityMixin])
+    pre_runtime = create_runtime(id, players, 1, options,runtime_class)
+    pre_runtime.addCallback(Protocol)
+
+    # Start the Twisted event loop.
+    reactor.run()
+
+
+if __name__ == "__main__":
+    main()
