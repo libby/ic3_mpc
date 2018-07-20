@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  p1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/mpc
+    ports:
+      - "9000"
+    working_dir: /usr/src/mpc
+    command: python number_shoot_out.py --no-ssl player-1.ini
+  p2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/mpc
+    ports:
+      - "9000"
+    working_dir: /usr/src/mpc
+    command: python number_shoot_out.py --no-ssl player-2.ini
+  p3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/mpc
+    ports:
+      - "9000"
+    working_dir: /usr/src/mpc
+    command: python number_shoot_out.py --no-ssl player-3.ini
+  config:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/mpc
+    ports:
+      - "9000"
+    working_dir: /usr/src/mpc
+    command: generate-config-files.py p1:9000 p2:9000 p3:9000
