@@ -5,9 +5,19 @@
 * places to look in the code
 * [Viff overview](http://viff.dk/api/index.html)
 
+# Number Shoot Out Game
 
+## Super quickstart using tmux and docker-compose
 
-# Viff Scratch Messing Around
+```bash
+docker-compose build
+./launch_shootout_with_docker.sh
+```
+*See the Battleship Game section for alternative ways to play the game.*
+
+# Battleship Game
+
+## Viff Scratch Messing Around
 
 * modifying the millionaires problem to see what is going on.
 * copy `battleship.py` into your `viff/apps/` directory. 
@@ -18,19 +28,19 @@ $> cd viff/apps
 $> ./launch_ships.sh
 ```
 
-# generate the config file 
+## generate the config file
 ```
 $> python generate-config-files.py -n 3 -t 1 localhost:9001 localhost:9002 localhost:9003
 ```
 
-# run scratch project
+## run scratch project
 ```
 $> python battleship.py --no-ssl player-1.ini
 $> python battleship.py --no-ssl player-2.ini
 $> python battleship.py --no-ssl player-3.ini
 ```
 
-# running the main loop
+## running the main loop
 _Work in progress_
 
 ```bash
