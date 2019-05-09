@@ -72,10 +72,10 @@ class Protocol:
         print res
 
     def num_living(self):
-        print "in num livesing"
-        print self.lives
+        # print "in num livesing"
+        # print self.lives
         the_living = filter(lambda x: x > 0, self.lives)
-        print "the living %s " % the_living
+        # print "the living %s " % the_living
         return len(the_living)
 
     def alive_players(self):
@@ -90,11 +90,11 @@ class Protocol:
 
     def run_round(self):
         print "Starting another round."
-        print "Player's lives %s " % self.lives
-        print "Test"
-        print "num living %s" % self.num_living()
-        print "Player naumbers %s " % self.alive_players()
-        print "is alive %s" % self.is_alive()
+        # print "Player's lives %s " % self.lives
+        # print "Test"
+        # print "num living %s" % self.num_living()
+        # print "Player naumbers %s " % self.alive_players()
+        # print "is alive %s" % self.is_alive()
 
         if not self.is_alive():
             sys.stdout.write(RED)
@@ -121,8 +121,6 @@ class Protocol:
         elif self.is_player:
             # if self.p1_lives_prev
 
-            print "This is your board: "
-            print self.my_coords
             sub = self.my_coords['Submarine']
             cruiser = self.my_coords['Cruiser']
 
@@ -134,7 +132,18 @@ class Protocol:
             for x in cruiser:
                 all_ship_coordinates.append(x)
 
-            print all_ship_coordinates
+            empty_board = [['.  ']*10 for _ in range(10)]
+            for x in all_ship_coordinates:
+                if len(str(x)) == 1:
+                    empty_board[0][x] = 'o  '
+                else:
+                    x_string = str(x)
+                    x_coord = int(x_string[0])
+                    y_coord = int(x_string[1])
+                    empty_board[x_coord][y_coord] = 'o  '
+
+            print "This is your current board: "
+            print '\n'.join(''.join(row) for row in empty_board)
 
             self.guess = self.obtain_guess()
             print "Your number attack is %d" % self.guess
@@ -230,6 +239,8 @@ class Protocol:
         open_two_hit = self.runtime.open(two_hit)
         return gather_shares([open_one_hit, open_two_hit])
 
+    ### This is not used anymore ###
+    """
     def convert_coordinates(ship, coords):
         length = len(SHIPS[ship])
         coordinates = [None for _ in range(length)]
@@ -248,6 +259,7 @@ class Protocol:
             final_coordinates.append(int(x))
 
         return tuple(final_coordinates)
+    """
 
     def __init__(self, runtime):
         # Save the Runtime for later use
@@ -291,7 +303,7 @@ class Protocol:
                 starting = str(coords[1]) + str(coords[2])
                 coordinates[0] = starting
 
-                if coords[0] == 'v':
+                if coords[0] == 'h':
                     for x in range(1, length):
                         coordinates[x] = str(coords[1]) + str(coords[2] + x)
                 else:
